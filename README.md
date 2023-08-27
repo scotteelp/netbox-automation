@@ -17,7 +17,7 @@ The NetBox Automation Script interacts with the NetBox API to retrieve device in
 ## Prerequisites
 
 - Python 3.x installed.
-- Required Python packages: `pynetbox`, `requests`, `openpyxl`.
+- Required Python packages: `pynetbox`, `csv`, `sys`, `requests`, `pandas`, `datetime`, `openpyxl`.
 - Access to a NetBox instance with API access.
 - Access to the FreeWheel API.
 
@@ -43,10 +43,29 @@ Run the script with a specified function name to perform the desired action. For
 - To fetch data from FreeWheel API: `python netbox_api.py get_freewheel_data`
 - To display a Chuck Norris joke: `python netbox_api.py joke`
 
+## Help Menu
+☑️  All required modules are already installed.
+☑️  All required modules are already installed.
+
+
+=====================================
+██╗   ██╗██╗██████╗  ██████╗  ██████╗ 
+██║   ██║██║██╔══██╗██╔════╝ ██╔═══██╗
+██║   ██║██║██║  ██║██║  ███╗██║   ██║
+╚██╗ ██╔╝██║██║  ██║██║   ██║██║   ██║
+ ╚████╔╝ ██║██████╔╝╚██████╔╝╚██████╔╝
+╚═══╝  ╚═╝╚═════╝  ╚═════╝  ╚═════╝ 
+=====================================
+
+☉ ‿ ⚆ 
+Available functions:
+ ► get_devices or -d ► GETS active device info from Netbox, writes output.csv and converts to output.xlsx file.
+ ► update_age or -a ► This will update the age for all active devices on Netbox server.
+ ► get_freewheel_data: or -f ► GETS data from Freewheel.
+ ► joke: or -j ► Prints random Chuck Norris joke.
+ ► Usage: python netbox_api.py <function_name>
+................................................
+
 ## Contributing
 
 Contributions are welcome! Please fork this repository and create a pull request with your enhancements.
-
-## License
-
-This project is licensed under the XYZ License. See the [LICENSE](LICENSE) file for details.
