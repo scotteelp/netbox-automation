@@ -2,11 +2,13 @@
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,  # Sets the logging level to INFO
-    format="%(levelname)s: %(message)s",  # Defines the format of log messages
-    handlers=[logging.StreamHandler()]  # Specifies that log messages should be printed to the console
+    level=logging.INFO,  # Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("netbox_api.log"),  # Log messages to a file
+        logging.StreamHandler()  # Log messages to the console
+    ]
 )
-logger = logging.getLogger(__name__)  # Creates a logger object
 
 # Module Validation
 import subprocess
