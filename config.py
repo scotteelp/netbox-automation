@@ -1,4 +1,2 @@
 NETBOX_TOKEN = ''
 NETBOX_URL = ''
-FW_TOKEN = ''
-FW_URL = ''
