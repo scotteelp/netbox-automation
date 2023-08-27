@@ -223,16 +223,27 @@ def get_devices(nb_devicelist, headers):
 
 
 def update_age(nb_devicelist):
-	for nb_device in nb_devicelist:
-		status = str(nb_device.status)
-		if status == "Active":
-			birthday = nb_device.custom_fields.get('Birthday')
-			if birthday:
-				new_age = calculate_age_in_months(birthday)
-				# Update the 'age' custom field in NetBox
-				nb_device.custom_fields['age'] = new_age
-				nb_device.save()
-				print(f"Updated age for device {nb_device.name} to {new_age} months.")
+    logger.info("Updating age information for devices...")
+    print()
+    print(UNDERLINE + BG_CYAN + BLACK + "................................................" + RESET)
+    print()
+    print(CYAN + NETBOX_ASCII + RESET)
+    for nb_device in nb_devicelist:
+        status = str(nb_device.status)
+        if status == "Active":
+            birthday = nb_device.custom_fields.get('Birthday')
+            if birthday:
+                new_age = calculate_age_in_months(birthday)
+                # Update the 'age' custom field in NetBox
+                nb_device.custom_fields['age'] = new_age
+                nb_device.save()
+                logger.info("Updated age for device %s to %d months.", nb_device.name, new_age)
+    
+    logger.info("Age information update complete.")
+    print()
+    print(UNDERLINE + BG_CYAN + BLACK + "................................................" + RESET)
+    print()
+
 				
 def joke():
     try:
