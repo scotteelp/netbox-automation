@@ -33,6 +33,14 @@ For more details on how logging works and how you can customize its behavior, re
 - Access to a NetBox instance with API access.
 - Access to the FreeWheel API.
 
+## About the `pynetbox.api` Module
+
+The `pynetbox` module provides a Python client for the NetBox API, allowing seamless interaction with the NetBox instance. The `pynetbox.api` module offers classes and methods that enable you to perform CRUD operations, retrieve data, and manage resources in NetBox.
+
+For example, you can use the `pynetbox.api` module to retrieve device information, update device records, fetch IP addresses, and more. This module simplifies the process of interacting with the NetBox API by providing a user-friendly Pythonic interface.
+
+For more information on using the `pynetbox` module, refer to the official documentation: [pynetbox Documentation](https://pynetbox.readthedocs.io/en/latest/).
+
 ## Getting Started
 
 1. Clone this repository to your local machine.

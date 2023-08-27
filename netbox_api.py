@@ -263,18 +263,23 @@ def joke():
 
 		
 def show_help():
-	print()
-	print(RED + VIDGO_ASCII + RESET)
-	print(RED + FACE_ASCII + RESET)
-	print(BOLD + "Available functions:" + RESET)
-	print(" ► " + BG_GREEN + BLACK + "get_devices" + RESET + " or " + BG_GREEN + BLACK + "-d" + RESET + " ► GETS active device info from Netbox, writes output.csv and converts to output.xlsx file.")
-	print(" ► " + BG_BLUE + WHITE + "update_age" + RESET + " or " + BG_BLUE + WHITE + "-a" + RESET + " ► This will update the age for all active devices on Netbox server.")
-	print(" ► " + BG_WHITE + BLACK + "get_freewheel_data:" + RESET + " or " + BG_WHITE + BLACK + "-f" + RESET + " ► GETS data from Freewheel.")
-	print(" ► " + BG_YELLOW + BLACK + "joke:" + RESET + " or " + BG_YELLOW + BLACK + "-j" + RESET +  " ► Prints random Chuck Norris joke.")
-	print(BOLD + WHITE + " ► Usage: python netbox_api.py <function_name>")
-	print(UNDERLINE + BG_CYAN + "................................................" + RESET)
-	print()
-	sys.exit(0)
+    print()
+    print(RED + VIDGO_ASCII + RESET)
+    print(RED + FACE_ASCII + RESET)
+    print(BOLD + "Available functions:" + RESET)
+    print(" ► " + BG_GREEN + BLACK + "get_devices" + RESET + " or " + BG_GREEN + BLACK + "-d" + RESET + " ► GETS active device info from Netbox, writes output.csv and converts to output.xlsx file.")
+    print(" ► " + BG_BLUE + WHITE + "update_age" + RESET + " or " + BG_BLUE + WHITE + "-a" + RESET + " ► This will update the age for all active devices on Netbox server.")
+    print(" ► " + BG_WHITE + BLACK + "get_freewheel_data:" + RESET + " or " + BG_WHITE + BLACK + "-f" + RESET + " ► GETS data from Freewheel.")
+    print(" ► " + BG_YELLOW + BLACK + "joke:" + RESET + " or " + BG_YELLOW + BLACK + "-j" + RESET +  " ► Prints random Chuck Norris joke.")
+    print(BOLD + WHITE + " ► Usage: python netbox_api.py <function_name>")
+    print(UNDERLINE + BG_CYAN + "................................................" + RESET)
+    print()
+    
+    # Log the help information
+    logger.info("Displayed help information to terminal.")
+    
+    sys.exit(0)
+
 	
 def main():
     try:
