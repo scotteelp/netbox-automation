@@ -1,10 +1,22 @@
-# NetBox Automation Script
+# NetBox Automation Script with Logging
 
-This script automates data retrieval from NetBox API and provides various functionalities for data processing.
+This script automates data retrieval from the NetBox API and offers various functionalities for data processing. It also includes a logging mechanism to provide better visibility into the script's operation and potential issues.
 
 ## Overview
 
 The NetBox Automation Script interacts with the NetBox API to retrieve device information, calculate device age, update age data in NetBox, fetch data from FreeWheel, and display Chuck Norris jokes. The script offers multiple features and functionalities to assist in managing and analyzing network device data.
+
+## Logging
+
+The script includes a logging mechanism to keep track of various events and errors during its execution. Here's how the logging works:
+
+- The built-in Python `logging` module is used to create and manage log messages.
+- Log messages are written to a file named `netbox_api.log`.
+- Different log levels (INFO, WARNING, ERROR) categorize the importance of each message.
+- Log messages from different functions and parts of the script are recorded, aiding in identifying script behavior and issues.
+- By default, log messages are printed to the terminal and stored in the log file. You can control the visibility of log messages in the terminal by adjusting the log level.
+
+For more details on how logging works and how you can customize its behavior, refer to the comments within the script's code and the [Python Logging documentation](https://docs.python.org/3/library/logging.html).
 
 ## Features
 
@@ -46,7 +58,3 @@ Run the script with a specified function name to perform the desired action. For
 ## Terminal Grab
 
 ![GitHub Logo](images/terminal_grab.png)
-
-## Contributing
-
-Contributions are welcome! Please fork this repository and create a pull request with your enhancements.

@@ -1,4 +1,4 @@
-# Set up logging
+# Logging Module
 import logging
 
 def setup_logging():
@@ -81,9 +81,11 @@ def check_and_install_modules(module_list):
         logger.info("All required modules are already installed.")
 
 # Call the function to check and install modules
+logger.setLevel(logging.ERROR)  # or logging.CRITICAL
 check_and_install_modules(required_modules)
+logger.setLevel(logging.INFO)  # Set it back to INFO after the function call
 
-# Modules
+# Main Modules
 import os
 import pynetbox
 import json
