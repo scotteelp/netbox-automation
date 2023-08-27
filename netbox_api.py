@@ -1,3 +1,13 @@
+# Set up logging
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  # Sets the logging level to INFO
+    format="%(levelname)s: %(message)s",  # Defines the format of log messages
+    handlers=[logging.StreamHandler()]  # Specifies that log messages should be printed to the console
+)
+logger = logging.getLogger(__name__)  # Creates a logger object
+
 # Module Validation
 import subprocess
 import importlib
@@ -61,9 +71,13 @@ import openpyxl
 from openpyxl.styles import Alignment
 
 # Load sensitive data from config.py and store as environment variables
-from config import NETBOX_TOKEN, NETBOX_URL
-os.environ["NETBOX_TOKEN"] = NETBOX_TOKEN
-os.environ["NETBOX_URL"] = NETBOX_URL
+try:
+    from config import NETBOX_TOKEN, NETBOX_URL
+    os.environ["NETBOX_TOKEN"] = NETBOX_TOKEN
+    os.environ["NETBOX_URL"] = NETBOX_URL
+except ImportError:
+    print(BG_RED + BLACK + "Error: The config.py file is missing or incomplete." + RESET)
+    sys.exit(1)
 
 # Import ascii art from ascii_art.py
 from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
@@ -189,21 +203,26 @@ def update_age(nb_devicelist):
 				print(f"Updated age for device {nb_device.name} to {new_age} months.")
 				
 def joke():
-	response = requests.get("https://api.chucknorris.io/jokes/random")
-	if response.status_code == 200:
-		joke_data = response.json()
-		joke_text = joke_data.get("value")
-		print()
-		print(YELLOW + CHUCK_ASCII + RESET)
-		print()
-		print(BG_YELLOW + BLACK + "Random Chuck Norris Joke:" + RESET)
-		print(BG_YELLOW + BLACK + joke_text + RESET)
-		print("................................................")
-		print("________________________________________________")
-	else:
-		print("Failed to fetch a Chuck Norris joke.")
-		print("................................................")
-		print("________________________________________________")
+    try:
+        response = requests.get("https://api.chucknorris.io/jokes/random")
+        response.raise_for_status()  # Check for HTTP errors
+        joke_data = response.json()
+        joke_text = joke_data.get("value")
+        print()
+        print(YELLOW + CHUCK_ASCII + RESET)
+        print()
+        print(BG_YELLOW + BLACK + "Random Chuck Norris Joke:" + RESET)
+        print(BG_YELLOW + BLACK + joke_text + RESET)
+        print("................................................")
+        print("________________________________________________")
+    except requests.exceptions.ConnectionError:
+        print(BG_RED + BLACK + "Error: Could not establish an internet connection." + RESET)
+    except requests.exceptions.HTTPError as e:
+        print(BG_RED + BLACK + f"HTTP error occurred: {e}" + RESET)
+    except Exception as e:
+        print(BG_RED + BLACK + f"An error occurred: {e}" + RESET)
+
+
 		
 def show_help():
 	print()
@@ -220,25 +239,28 @@ def show_help():
 	sys.exit(0)
 	
 def main():
-	check_and_install_modules(required_modules)
-	
-	if len(sys.argv) < 2:
-		show_help()
+    try:
+        check_and_install_modules(required_modules)
+        if len(sys.argv) < 2:
+            show_help()
 
-	function_name = sys.argv[1]
+        function_name = sys.argv[1]
 
-	if function_name == "get_devices" or function_name == "-d":
-		get_devices(nb_devicelist, headers)
-	elif function_name == "update_age"or function_name == "-a":
-		update_age(nb_devicelist)
-	elif function_name == "get_freewheel_data" or function_name == "-f":
-			get_freewheel_data()
-	elif function_name == "joke" or function_name == "-j":
-		joke()
-	elif function_name == "--help" or function_name == "-h":
-		show_help()
-	else:
-		print(f"Function '{function_name}' not recognized.")
+        if function_name == "get_devices" or function_name == "-d":
+            get_devices(nb_devicelist, headers)
+        elif function_name == "update_age"or function_name == "-a":
+            update_age(nb_devicelist)
+        elif function_name == "get_freewheel_data" or function_name == "-f":
+            get_freewheel_data()
+        elif function_name == "joke" or function_name == "-j":
+            joke()
+        elif function_name == "--help" or function_name == "-h":
+            show_help()
+        else:
+            logger.error(f"Function '{function_name}' not recognized.")
+
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")  # Logs the error message using the logger
 
 if __name__ == "__main__":
-	main()
+    main()
