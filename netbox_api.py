@@ -1,5 +1,6 @@
 # Logging Module
 import logging
+import importlib
 
 def setup_logging():
     logger = logging.getLogger(__name__)
@@ -24,10 +25,21 @@ def setup_logging():
 
 logger = setup_logging()
 
-
+# Validate config.py
+def validate_config():
+    try:
+        # Try importing NETBOX_TOKEN and NETBOX_URL from config.py
+        from config import NETBOX_TOKEN, NETBOX_URL
+        # Set environment variables
+        os.environ["NETBOX_TOKEN"] = NETBOX_TOKEN
+        os.environ["NETBOX_URL"] = NETBOX_URL
+    except ImportError:
+        logger.error("Configuration error: Missing or incomplete data in config.py.")
+        logger.error("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
+        sys.exit(1)
+        
 # Module Validation
 import subprocess
-import importlib
 
 # Import color constants from color_definitions.py
 from color_definitions import BOLD, UNDERLINE, RESET, RED, GREEN, YELLOW, BLACK, BLUE, MAGENTA, CYAN, WHITE, BG_BLACK, BG_RED, BG_GREEN, BG_YELLOW, BG_BLUE, BG_MAGENTA, BG_CYAN, BG_WHITE
@@ -111,24 +123,6 @@ except ImportError:
 
 # Import ascii art from ascii_art.py
 from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
-
-def get_freewheel_data():
-	url = "https://api.freewheel.tv/services/v4/sites/1"  # Freehweel API endpoint
-
-	headers = {
-		"Authorization": "Bearer ACCESS_TOKEN", 
-		"Accept": "application/json"
-	}
-
-	response = requests.get(url, headers=headers)
-
-	if response.status_code == 200:
-		data = response.json()
-		# Process and utilize the data as needed
-		print(BOLD + "FreeWheel TV Data:")
-		print(BG_WHITE + BLACK + data)
-	else:
-		print(BOLD + "Failed to fetch FreeWheel TV data.")
 		
 #host and token
 nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
@@ -280,7 +274,6 @@ def show_help():
     print(BOLD + "Available functions:" + RESET)
     print(" ► " + BG_GREEN + BLACK + "get_devices" + RESET + " or " + BG_GREEN + BLACK + "-d" + RESET + " ► GETS active device info from Netbox, writes output.csv and converts to output.xlsx file.")
     print(" ► " + BG_BLUE + WHITE + "update_age" + RESET + " or " + BG_BLUE + WHITE + "-a" + RESET + " ► This will update the age for all active devices on Netbox server.")
-    print(" ► " + BG_WHITE + BLACK + "get_freewheel_data:" + RESET + " or " + BG_WHITE + BLACK + "-f" + RESET + " ► GETS data from Freewheel.")
     print(" ► " + BG_YELLOW + BLACK + "joke:" + RESET + " or " + BG_YELLOW + BLACK + "-j" + RESET +  " ► Prints random Chuck Norris joke.")
     print(BOLD + WHITE + " ► Usage: python netbox_api.py <function_name>")
     print(UNDERLINE + BG_CYAN + "................................................" + RESET)
@@ -294,9 +287,12 @@ def show_help():
 	
 def main():
     try:
-        # Log a message at the start of the script run
+        # Initialize logger
         logger.info("Script started")
         
+        # Validate config.py
+        validate_config()
+
         check_and_install_modules(required_modules)
         if len(sys.argv) < 2:
             show_help()
@@ -307,8 +303,6 @@ def main():
             get_devices(nb_devicelist, headers)
         elif function_name == "update_age" or function_name == "-a":
             update_age(nb_devicelist)
-        elif function_name == "get_freewheel_data" or function_name == "-f":
-            get_freewheel_data()
         elif function_name == "joke" or function_name == "-j":
             joke()
         elif function_name == "--help" or function_name == "-h":
@@ -316,8 +310,10 @@ def main():
         else:
             logger.error(f"Function '{function_name}' not recognized.")
 
+    except pynetbox.RequestError as pnb_error:
+        logger.error("A pynetbox error occurred: %s", pnb_error)
     except Exception as e:
-        logger.error(f"An error occurred: {e}")  # Logs the error message using the logger
+        logger.error(f"An error occurred: {e}")
     
     finally:
         # Log a message at the end of the script run
