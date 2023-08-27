@@ -43,6 +43,10 @@ Run the script with a specified function name to perform the desired action. For
 - To fetch data from FreeWheel API: `python netbox_api.py get_freewheel_data`
 - To display a Chuck Norris joke: `python netbox_api.py joke`
 
+## Terminal Grab
+
+![GitHub Logo](images/terminal_grab.png)
+
 ## Contributing
 
 Contributions are welcome! Please fork this repository and create a pull request with your enhancements.
