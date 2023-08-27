@@ -1,14 +1,29 @@
 # Set up logging
 import logging
 
-logging.basicConfig(
-    level=logging.INFO,  # Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("netbox_api.log"),  # Log messages to a file
-        logging.StreamHandler()  # Log messages to the console
-    ]
-)
+def setup_logging():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # Create a formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+    # Create a handler for writing log messages to a file
+    file_handler = logging.FileHandler("netbox_api.log")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    # Create a handler for displaying log messages in the terminal
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.WARNING)  # Only show warnings and errors in terminal
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    return logger
+
+logger = setup_logging()
+
 
 # Module Validation
 import subprocess
@@ -22,37 +37,48 @@ required_modules = ['pynetbox', 'csv', 'sys', 'requests', 'pandas', 'datetime', 
 
 # Check if a module is installed
 def is_module_installed(module_name):
-	try:
-		importlib.import_module(module_name)
-		return True
-	except ImportError:
-		return False
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        warning_message = f"Module {module_name} is not installed."
+        logger.warning(warning_message)
+        return False
 
-# Install a missing module
+# Install a missing module		
 def install_module(module_name):
-	try:
-		subprocess.check_call(["pip3", "install", module_name])
-		print(BOLD + BG_CYAN + WHITE +f"☑️  Successfully installed {module_name}" + RESET)
-	except Exception as e:
-		print(BOLD + UNDERLINE + RED + f"🅧  Error installing {module_name}: {e}" + RESET)
+    try:
+        subprocess.check_call(["pip3", "install", module_name])
+        success_message = f"Successfully installed {module_name}"
+        print(BOLD + BG_CYAN + WHITE + f"☑️  {success_message}" + RESET)
+        logger.info(success_message)
+    except Exception as e:
+        error_message = f"Error installing {module_name}: {e}"
+        print(BOLD + UNDERLINE + RED + f"🅧  {error_message}" + RESET)
+        logger.error(error_message)
+
+
 
 # Check and install missing modules
 def check_and_install_modules(module_list):
-	missing_modules = [module for module in module_list if not is_module_installed(module)]
-	
-	if missing_modules:
-		print("⚠️  The following required modules are missing:")
-		for module in missing_modules:
-			print(f" - {module}")
-		
-		install_choice = input("Do you want to install the missing modules? (y/n): ").lower()
-		
-		if install_choice == "y":
-			for module in missing_modules:
-				install_module(module)
-	
-	else:
-		print(BOLD + BG_CYAN + WHITE + "☑️  All required modules are already installed." + RESET)
+    missing_modules = [module for module in module_list if not is_module_installed(module)]
+    
+    if missing_modules:
+        print("⚠️  The following required modules are missing:")
+        logger.warning("The following required modules are missing:")
+        for module in missing_modules:
+            print(f" - {module}")
+            logger.warning(f" - {module}")
+        
+        install_choice = input("Do you want to install the missing modules? (y/n): ").lower()
+        
+        if install_choice == "y":
+            for module in missing_modules:
+                install_module(module)
+    
+    else:
+        print(BOLD + BG_CYAN + WHITE + "☑️  All required modules are already installed." + RESET)
+        logger.info("All required modules are already installed.")
 
 # Call the function to check and install modules
 check_and_install_modules(required_modules)
@@ -142,55 +168,57 @@ def csv_to_xlsx(headers, devices_data):
 	wb.save('output.xlsx')
 	
 def get_devices(nb_devicelist, headers):
-	devices_data = []  # List to hold device information
-	print()
-	print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
-	print()
-	print(GREEN + NETBOX_ASCII + RESET)
-	# Redirect stdout to a null device to hide output
-	#original_stdout = sys.stdout
-	#sys.stdout = open('output.csv', 'a')
-	str1 = 'Active'
-	for nb_device in nb_devicelist:
-			result = {}
-			status = str(nb_device.status)
-			if status == str1:
-				result['Name'] = str(nb_device)
-				result['Status'] = status
-				result['Site'] = str(nb_device.site)
-				result['Rack'] = str(nb_device.rack)
-				result['Role'] = nb_device.device_role.name
-				result['Manufacturer'] = nb_device.device_type.manufacturer.name
-				result['Type'] = str(nb_device.device_type)
-				result['Owner'] = nb_device.custom_fields.get('owner')
-				result['Birthday'] = nb_device.custom_fields.get('Birthday')
-				age = nb_device.custom_fields.get('age')
-				if age is None and result['Birthday']:
-					result['Age (Months)'] = calculate_age_in_months(result['Birthday'])
-				else:
-					result['Age (Months)'] = age
-				result['Service Contract'] = nb_device.custom_fields.get('service_contract')
-				result['Warranty'] = nb_device.custom_fields.get('warranty')
-				result['Serial Number'] = str(nb_device.serial)
-				result['Platform'] = str(nb_device.platform)
-				result['SW'] = nb_device.custom_fields.get('SW')
-				result['SW_Version'] = nb_device.custom_fields.get('SW_Version')
-				result['Primary IP'] = str(nb_device.primary_ip)
+    devices_data = []  # List to hold device information
+    logger.info("Getting device information from Netbox...")
+    print()
+    print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
+    print()
+    print(GREEN + NETBOX_ASCII + RESET)
+    str1 = 'Active'
+    for nb_device in nb_devicelist:
+        result = {}
+        status = str(nb_device.status)
+        if status == str1:
+            result['Name'] = str(nb_device)
+            result['Status'] = status
+            result['Site'] = str(nb_device.site)
+            result['Rack'] = str(nb_device.rack)
+            result['Role'] = nb_device.device_role.name
+            result['Manufacturer'] = nb_device.device_type.manufacturer.name
+            result['Type'] = str(nb_device.device_type)
+            result['Owner'] = nb_device.custom_fields.get('owner')
+            result['Birthday'] = nb_device.custom_fields.get('Birthday')
+            age = nb_device.custom_fields.get('age')
+            if age is None and result['Birthday']:
+                result['Age (Months)'] = calculate_age_in_months(result['Birthday'])
+            else:
+                result['Age (Months)'] = age
+            result['Service Contract'] = nb_device.custom_fields.get('service_contract')
+            result['Warranty'] = nb_device.custom_fields.get('warranty')
+            result['Serial Number'] = str(nb_device.serial)
+            result['Platform'] = str(nb_device.platform)
+            result['SW'] = nb_device.custom_fields.get('SW')
+            result['SW_Version'] = nb_device.custom_fields.get('SW_Version')
+            result['Primary IP'] = str(nb_device.primary_ip)
 
-				devices_data.append(result)
+            devices_data.append(result)
 
-			with open('output.csv', 'a', newline='') as f_object:
-				writer_object = writer(f_object)
-				for device in devices_data:
-					writer_object.writerow([device.get(header, '') for header in headers])
+        # Logging information for each device processed
+        if 'Name' in result:
+            logger.info("Processed device: %s", result['Name'])
 
-	csv_to_xlsx(headers, devices_data)
-	
-	#sys.stdout.close()
-	#sys.stdout = original_stdout  # Restore original stdout
-	print(BG_GREEN + BLACK + "Netbox device information written to output.csv" + RESET)	
-	print(UNDERLINE + "................................................" + RESET)
-	print()
+        with open('output.csv', 'a', newline='') as f_object:
+            writer_object = writer(f_object)
+            for device in devices_data:
+                writer_object.writerow([device.get(header, '') for header in headers])
+
+    csv_to_xlsx(headers, devices_data)
+    logger.info("Device information written to output.csv and output.xlsx")
+    logger.info("Finished getting device information from Netbox")
+    print()
+    print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
+    print()
+
 
 def update_age(nb_devicelist):
 	for nb_device in nb_devicelist:
@@ -210,6 +238,8 @@ def joke():
         response.raise_for_status()  # Check for HTTP errors
         joke_data = response.json()
         joke_text = joke_data.get("value")
+        logger.info("Random Chuck Norris Joke:")
+        logger.info(joke_text)
         print()
         print(YELLOW + CHUCK_ASCII + RESET)
         print()
@@ -219,10 +249,14 @@ def joke():
         print("________________________________________________")
     except requests.exceptions.ConnectionError:
         print(BG_RED + BLACK + "Error: Could not establish an internet connection." + RESET)
+        logger.error("Error: Could not establish an internet connection.")
     except requests.exceptions.HTTPError as e:
         print(BG_RED + BLACK + f"HTTP error occurred: {e}" + RESET)
+        logger.error(f"HTTP error occurred: {e}")
     except Exception as e:
         print(BG_RED + BLACK + f"An error occurred: {e}" + RESET)
+        logger.error(f"An error occurred: {e}")
+
 
 
 		
@@ -242,6 +276,9 @@ def show_help():
 	
 def main():
     try:
+        # Log a message at the start of the script run
+        logger.info("Script started")
+        
         check_and_install_modules(required_modules)
         if len(sys.argv) < 2:
             show_help()
@@ -250,7 +287,7 @@ def main():
 
         if function_name == "get_devices" or function_name == "-d":
             get_devices(nb_devicelist, headers)
-        elif function_name == "update_age"or function_name == "-a":
+        elif function_name == "update_age" or function_name == "-a":
             update_age(nb_devicelist)
         elif function_name == "get_freewheel_data" or function_name == "-f":
             get_freewheel_data()
@@ -263,6 +300,10 @@ def main():
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")  # Logs the error message using the logger
+    
+    finally:
+        # Log a message at the end of the script run
+        logger.info("Script completed")
 
 if __name__ == "__main__":
     main()
