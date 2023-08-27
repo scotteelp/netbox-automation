@@ -52,6 +52,29 @@ For more information on using the `pynetbox` module, refer to the official docum
 - `update_age` (`-a`): Updates the age of active devices in NetBox based on birthdate information.
 - `joke` (`-j`): Displays a random Chuck Norris joke.
 
+## Device Fields Fetched from get_devices
+
+The script retrieves the following device fields from the NetBox server:
+
+- `Name`: Name of the device.
+- `Status`: Status of the device (Active or other).
+- `Site`: Location site of the device.
+- `Rack`: Rack information of the device.
+- `Role`: Role of the device (e.g., switch, router).
+- `Manufacturer`: Manufacturer of the device.
+- `Type`: Type of the device.
+- `Owner`: Owner of the device.
+- `Birthday`: Birthdate of the device (custom field).
+- `Age (Months)`: Calculated age of the device in months.
+- `Service Contract`: Service contract information (custom field).
+- `Warranty`: Warranty information (custom field).
+- `Serial Number`: Serial number of the device.
+- `Platform`: Platform of the device.
+- `Software`: Software information (custom field).
+- `SW_Version`: Software version (custom field).
+- `Primary IP`: Primary IP address of the device.
+
+
 ## Usage
 
 Run the script with a specified function name to perform the desired action. For example:
