@@ -20,10 +20,12 @@ For more details on how logging works and how you can customize its behavior, re
 
 ## Features
 
-- Connects to the NetBox API to retrieve and process device information.
-- Calculates the age of devices based on birthdate information.
-- Updates the age information for active devices in NetBox.
-- Displays random Chuck Norris jokes for entertainment.
+- Get active device information from NetBox and export to CSV and XLSX formats.
+- Update the age information for active devices based on their birthday.
+- Retrieve and display rack details including devices installed.
+- Display a random Chuck Norris joke.
+- Automatically install missing Python modules.
+- Logging of script actions to `netbox_api.log`.
 
 ## Prerequisites
 
@@ -49,6 +51,7 @@ For more information on using the `pynetbox` module, refer to the official docum
 ## Available Functions
 
 - `get_devices` (`-d`): Retrieves active device information from NetBox, writes to `output.csv`, and converts it to an `output.xlsx` file.
+- `get_racks` (`-r`): Retrieves rack with devices details, writes to `rack_details_with_devices.xlsx` file.
 - `update_age` (`-a`): Updates the age of active devices in NetBox based on birthdate information.
 - `joke` (`-j`): Displays a random Chuck Norris joke.
 
@@ -74,14 +77,85 @@ The script retrieves the following device fields from the NetBox server:
 - `SW_Version`: Software version (custom field).
 - `Primary IP`: Primary IP address of the device.
 
+## Rack Details with Device Information
+The get_racks function offers a comprehensive view of rack details along with information about devices installed within each rack. This feature is invaluable for visualizing rack occupancy and understanding the distribution of network devices.
+
+### Functionality
+When you execute the get_racks function, the script undertakes the following steps:
+
+1. Fetches all racks from the NetBox instance.
+2. For each rack:
+    - Displays rack-specific information such as rack name, site location, physical location, and height.
+    - Retrieves devices associated with the rack using the NetBox API.
+    - Presents detailed information about each device, including its name, role, type, manufacturer, rack unit position, and more.
+
+This functionality provides a quick assessment of each rack's contents, reveals available space, and facilitates understanding of the types of devices installed.
+
+### Example Output
+Below is an example of what the output might resemble:
+```
+Rack Name: Rack1
+Site: Main Data Center
+Location: Data Center Room 1
+Height: 42
+Devices:
+ - Device Name: Router1
+   Role: Router
+   Type: Enterprise Router
+   Manufacturer: Cisco
+   Rack Unit: 5
+ - Device Name: Switch1
+   Role: Switch
+   Type: Access Switch
+   Manufacturer: Cisco
+   Rack Unit: 10
+ ...
+
+Rack Name: Rack2
+Site: Secondary Data Center
+Location: Data Center Room 2
+Height: 42
+Devices:
+ - Device Name: Firewall1
+   Role: Firewall
+   Type: Enterprise Firewall
+   Manufacturer: Palo Alto
+   Rack Unit: 3
+ - Device Name: Switch2
+   Role: Switch
+   Type: Access Switch
+   Manufacturer: Juniper
+   Rack Unit: 12
+ ...
+
+```
+### Use Cases
+- ***Capacity Planning:*** The output offers a clear view of rack utilization, aiding in capacity planning and allocation of space for new devices.
+- ***Device Distribution:*** Rapid identification of racks housing specific device types (e.g., routers, switches) ensures balanced distribution and redundancy.
+- ***Troubleshooting:*** When diagnosing issues, an overview of device locations assists in pinpointing potential problem areas.
+
+### Logging
+Information presented during the execution of the get_racks function is logged, providing transparency into the process and enabling review of details at a later stage.
+
+This functionality amplifies your ability to manage and comprehend your network infrastructure, ensuring efficient utilization of rack space and enhancing device management practices.
 
 ## Usage
 
 Run the script with a specified function name to perform the desired action. For example:
 - To retrieve device information and generate CSV and Excel reports: `python netbox_api.py get_devices`
+- To retrieve rack with device details and generated Excel report: `python netbox_api.py get_racks`
 - To update age information for active devices: `python netbox_api.py update_age`
 - To display a Chuck Norris joke: `python netbox_api.py joke`
 
 ## Terminal Grab
 
 ![GitHub Logo](images/terminal_grab.png)
+
+## Acknowledgements
+
+- This script uses the PyNetbox library for interacting with the NetBox API.
+- The Chuck Norris jokes are retrieved from the Chuck Norris Jokes API.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

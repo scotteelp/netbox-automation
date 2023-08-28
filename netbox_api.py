@@ -53,49 +53,62 @@ def is_module_installed(module_name):
         importlib.import_module(module_name)
         return True
     except ImportError:
-        warning_message = f"Module {module_name} is not installed."
+        warning_message = f"❌  Module {module_name} is not installed."
         logger.warning(warning_message)
+        #logger.info(warning_message)  # Log the same message as info level
         return False
 
 # Install a missing module		
 def install_module(module_name):
     try:
-        subprocess.check_call(["pip3", "install", module_name])
+        # Redirect pip3 output to the log file
+        with open("netbox_api.log", "a") as log_file:
+            subprocess.check_call(["pip3", "install", module_name], stdout=log_file, stderr=log_file)
+
         success_message = f"Successfully installed {module_name}"
-        print(BOLD + BG_CYAN + WHITE + f"☑️  {success_message}" + RESET)
+        print(BOLD + BG_CYAN + WHITE + f"✅  {success_message}" + RESET)
         logger.info(success_message)
+        logger.debug(success_message)  # Log the same message as debug level
     except Exception as e:
-        error_message = f"Error installing {module_name}: {e}"
-        print(BOLD + UNDERLINE + RED + f"🅧  {error_message}" + RESET)
+        error_message = f"❌  Error installing {module_name}: {e}"
+        print(BOLD + UNDERLINE + RED + f"❌  {error_message}" + RESET)
         logger.error(error_message)
-
-
+        logger.debug(error_message)  # Log the same message as debug level
 
 # Check and install missing modules
 def check_and_install_modules(module_list):
     missing_modules = [module for module in module_list if not is_module_installed(module)]
     
     if missing_modules:
-        print("⚠️  The following required modules are missing:")
-        logger.warning("The following required modules are missing:")
+        #print("⚠️  The following required modules are missing:")
+        #logger.warning("The following required modules are missing:")
         for module in missing_modules:
-            print(f" - {module}")
+            #print(f" - {module}")
             logger.warning(f" - {module}")
+            #logger.info(f" - {module}")
         
-        install_choice = input("Do you want to install the missing modules? (y/n): ").lower()
-        
-        if install_choice == "y":
-            for module in missing_modules:
-                install_module(module)
+        while True:
+            install_choice = input(BOLD + WHITE + "Do you want to install the missing modules? (y/n): " + RESET).strip().lower()
+
+            if install_choice == "y" or install_choice == "yes":
+                logger.info(BOLD + WHITE + "User chose to install missing modules.")
+                for module in missing_modules:
+                    install_module(module)
+                break
+            elif install_choice == "":
+                print(BG_BLUE + BOLD + YELLOW + "Please enter 'y' or 'yes' to install missing modules." + RESET)
+                logger.info("User pressed Enter/Return. Please enter 'y' or 'yes' to install missing modules." + RESET)
+            else:
+                print(BG_BLUE + BOLD + YELLOW + "Missing modules will not be installed." + RESET)
+                logger.info("User chose not to install missing modules.")
+                break
     
     else:
-        print(BOLD + BG_CYAN + WHITE + "☑️  All required modules are already installed." + RESET)
-        logger.info("All required modules are already installed.")
+        print(BOLD + BG_CYAN + WHITE + "✅  All required modules are already installed." + RESET)
+        logger.info("✅  All required modules are already installed.")
+        logger.debug("✅  All required modules are already installed.")  # Log the same message as debug level
 
-# Call the function to check and install modules
-logger.setLevel(logging.ERROR)  # or logging.CRITICAL
 check_and_install_modules(required_modules)
-logger.setLevel(logging.INFO)  # Set it back to INFO after the function call
 
 # Main Modules
 import os
@@ -111,6 +124,7 @@ import datetime
 from datetime import datetime
 import openpyxl
 from openpyxl.styles import Alignment
+import textwrap
 
 # Load sensitive data from config.py and store as environment variables
 try:
@@ -167,6 +181,7 @@ def get_devices(nb_devicelist, headers):
     devices_data = []  # List to hold device information
     logger.info("Getting device information from Netbox...")
     print()
+    print(BOLD + BG_GREEN + WHITE +"Getting device information from Netbox..." + RESET)
     print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
     print()
     print(GREEN + NETBOX_ASCII + RESET)
@@ -210,8 +225,9 @@ def get_devices(nb_devicelist, headers):
 
     csv_to_xlsx(headers, devices_data)
     logger.info("Device information written to output.csv and output.xlsx")
+    print(BOLD + BG_GREEN + WHITE + "Device information written to output.csv and output.xlsx" + RESET)
     logger.info("Finished getting device information from Netbox")
-    print()
+    print(BOLD + BG_GREEN + WHITE + "Finished getting device information from Netbox" + RESET)
     print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
     print()
 
@@ -219,6 +235,7 @@ def get_devices(nb_devicelist, headers):
 def update_age(nb_devicelist):
     logger.info("Updating age information for devices...")
     print()
+    print(BG_CYAN + BLACK + "Updating age information for devices..." + RESET)
     print(UNDERLINE + BG_CYAN + BLACK + "................................................" + RESET)
     print()
     print(CYAN + NETBOX_ASCII + RESET)
@@ -238,41 +255,115 @@ def update_age(nb_devicelist):
     print(UNDERLINE + BG_CYAN + BLACK + "................................................" + RESET)
     print()
 
-				
+
+def save_rack_details_to_xlsx(racks_with_devices):
+    wb = openpyxl.Workbook()
+    # Remove the default "Sheet"
+    wb.remove(wb.active)
+
+    for rack_name, devices_info in racks_with_devices.items():
+        ws = wb.create_sheet(title=rack_name)
+        ws.append(["Device Name", "Role", "Type", "Manufacturer", "Rack Unit"])
+        for device_info in devices_info:
+            ws.append([
+                device_info["name"],
+                device_info["role"],
+                device_info["type"],
+                device_info["manufacturer"],
+                device_info["rack_unit"]
+            ])
+
+    wb.save('rack_details_with_devices.xlsx')
+
+def get_rack_details_with_devices(nb_instance):
+    try:
+        logger.info("Fetching rack details and associated devices from NetBox...")
+        print(BOLD + BG_GREEN + WHITE + "Fetching rack details and associated devices from NetBox..." + RESET)
+        print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
+
+        print(GREEN + NETBOX_ASCII + RESET)
+        racks_with_devices = {}
+
+        # Fetch all racks from NetBox
+        racks = nb_instance.dcim.racks.all()
+
+        for rack in racks:
+            rack_info = {
+                "name": rack.name,
+                "site": rack.site.name,
+                "location": rack.location,
+                "height": rack.u_height
+            }
+
+            devices_info = []
+            for device in nb_instance.dcim.devices.filter(rack_id=rack.id):
+                device_info = {
+                    "name": device.name,
+                    "role": device.device_role.name if device.device_role else "N/A",
+                    "type": device.device_type.model if device.device_type else "N/A",
+                    "manufacturer": device.device_type.manufacturer.name if device.device_type and device.device_type.manufacturer else "N/A",
+                    "rack_unit": device.position if device.position else "N/A"
+                }
+                devices_info.append(device_info)
+
+            racks_with_devices[rack.name] = devices_info
+
+        logger.info("Retrieved rack details and associated devices.")
+        print(BOLD + BG_GREEN + WHITE + "Retrieved rack details and associated devices." + RESET)
+        save_rack_details_to_xlsx(racks_with_devices)
+        logger.info("Saved rack details with associated devices to rack_details_with_devices.xlsx")
+        print(BOLD + BG_GREEN + WHITE + "Saved rack details with associated devices to rack_details_with_devices.xlsx" + RESET)
+
+    except pynetbox.RequestError as pnb_error:
+        logger.error("A pynetbox error occurred: %s", pnb_error)
+    except Exception as e:
+        logger.error("An error occurred: %s", e)
+    print(UNDERLINE + BG_GREEN + BLACK + "................................................" + RESET)
+    print()
+
+
+def get_rack_names(nb_instance):
+    rack_names = []
+    racks = nb_instance.dcim.racks.all()
+    for rack in racks:
+        rack_names.append(rack.name)
+    return rack_names
+
 def joke():
     try:
         response = requests.get("https://api.chucknorris.io/jokes/random")
         response.raise_for_status()  # Check for HTTP errors
         joke_data = response.json()
         joke_text = joke_data.get("value")
-        logger.info("Random Chuck Norris Joke:")
-        logger.info(joke_text)
-        print()
+        logger.info("Random Chuck Norris Joke: %s", joke_text)  # Log the full joke text
+
+        print()  # Print an empty line
         print(YELLOW + CHUCK_ASCII + RESET)
         print()
-        print(BG_YELLOW + BLACK + "Random Chuck Norris Joke:" + RESET)
-        print(BG_YELLOW + BLACK + joke_text + RESET)
-        print("................................................")
-        print("________________________________________________")
+
+        # Word wrap the joke text and print it with background color reset after 77 characters
+        wrapped_joke_text = textwrap.fill(joke_text, width=62)  # Adjust width as needed
+        lines = wrapped_joke_text.split('\n')
+        for line in lines:
+            print(BG_YELLOW + BLACK + line[:62] + RESET)
+            print(BG_YELLOW + BLACK + line[62:] + RESET)
+        print("................................................................")
+        print("________________________________________________________________")    
+
     except requests.exceptions.ConnectionError:
-        print(BG_RED + BLACK + "Error: Could not establish an internet connection." + RESET)
         logger.error("Error: Could not establish an internet connection.")
     except requests.exceptions.HTTPError as e:
-        print(BG_RED + BLACK + f"HTTP error occurred: {e}" + RESET)
-        logger.error(f"HTTP error occurred: {e}")
+        logger.error("HTTP error occurred: %s", e)
     except Exception as e:
-        print(BG_RED + BLACK + f"An error occurred: {e}" + RESET)
-        logger.error(f"An error occurred: {e}")
+        logger.error("An error occurred: %s", e)
 
-
-
-		
 def show_help():
     print()
     print(RED + VIDGO_ASCII + RESET)
     print(RED + FACE_ASCII + RESET)
     print(BOLD + "Available functions:" + RESET)
     print(" ► " + BG_GREEN + BLACK + "get_devices" + RESET + " or " + BG_GREEN + BLACK + "-d" + RESET + " ► GETS active device info from Netbox, writes output.csv and converts to output.xlsx file.")
+    print (" ► " + BG_GREEN + BLACK + "get_rack_device_details" + RESET + " or " + BG_GREEN + BLACK + "-r" + RESET + " ► GETS rack with device details, and saves file rack_details_with_devices.xlsx.")
     print(" ► " + BG_BLUE + WHITE + "update_age" + RESET + " or " + BG_BLUE + WHITE + "-a" + RESET + " ► This will update the age for all active devices on Netbox server.")
     print(" ► " + BG_YELLOW + BLACK + "joke:" + RESET + " or " + BG_YELLOW + BLACK + "-j" + RESET +  " ► Prints random Chuck Norris joke.")
     print(BOLD + WHITE + " ► Usage: python netbox_api.py <function_name>")
@@ -293,7 +384,17 @@ def main():
         # Validate config.py
         validate_config()
 
+        # Set up NetBox API connection
+        nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
+
+        # Get list of available rack names
+        rack_names = get_rack_names(nb)
+
+        # Call the function to check and install modules
+        logger.setLevel(logging.ERROR)
         check_and_install_modules(required_modules)
+        logger.setLevel(logging.DEBUG)
+        
         if len(sys.argv) < 2:
             show_help()
 
@@ -303,6 +404,8 @@ def main():
             get_devices(nb_devicelist, headers)
         elif function_name == "update_age" or function_name == "-a":
             update_age(nb_devicelist)
+        elif function_name == "get_racks" or function_name == "-r":
+             get_rack_details_with_devices(nb)
         elif function_name == "joke" or function_name == "-j":
             joke()
         elif function_name == "--help" or function_name == "-h":
