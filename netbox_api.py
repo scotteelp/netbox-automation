@@ -201,7 +201,7 @@ def get_devices(nb_devicelist, headers):
 
         # Logging information for each device processed
         if 'Name' in result:
-            logger.info("Processed device age: %s", result['Name'])
+            logger.info("Processed device: %s", result['Name'])
 
         with open('output.csv', 'a', newline='') as f_object:
             writer_object = writer(f_object)
