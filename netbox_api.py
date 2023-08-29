@@ -86,8 +86,12 @@ def check_and_install_modules(module_list):
     missing_modules = [module for module in module_list if not is_module_installed(module)]
     
     if missing_modules:
+        #print("⚠️  The following required modules are missing:")
+        #logger.warning("The following required modules are missing:")
         for module in missing_modules:
-            logger.warning(f"Required module '{module}' is missing.")
+            #print(f" - {module}")
+            logger.warning(f" - {module}")
+            #logger.info(f" - {module}")
         
         while True:
             install_choice = input(BOLD + WHITE + "Do you want to install the missing modules? (y/n): " + RESET).strip().lower()
@@ -99,7 +103,7 @@ def check_and_install_modules(module_list):
                 break
             elif install_choice == "":
                 print(BG_BLUE + BOLD + YELLOW + "Please enter 'y' or 'yes' to install missing modules." + RESET)
-                logger.warning("User pressed Enter/Return. Please enter 'y' or 'yes' to install missing modules.")
+                logger.info("User pressed Enter/Return. Please enter 'y' or 'yes' to install missing modules." + RESET)
             else:
                 print(BG_BLUE + BOLD + YELLOW + "Missing modules will not be installed." + RESET)
                 logger.info("User chose not to install missing modules.")
@@ -108,7 +112,7 @@ def check_and_install_modules(module_list):
     else:
         print(BOLD + BG_CYAN + WHITE + "✅  All required modules are already installed." + RESET)
         logger.info("✅  All required modules are already installed.")
-        logger.debug("✅  All required modules are already installed.")
+        logger.debug("✅  All required modules are already installed.")  # Log the same message as debug level
 
 # Main Modules
 import os
@@ -463,7 +467,7 @@ def main():
         # Call the function to check and install modules
         #logger.setLevel(logging.ERROR)
         check_and_install_modules(required_modules)
-        #logger.setLevel(logging.INFO)
+        #logger.setLevel(logging.DEBUG)
         
         if len(sys.argv) < 2:
             show_help()
