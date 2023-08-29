@@ -71,8 +71,8 @@ def install_module(module_name):
         with open("netbox_api.log", "a") as log_file:
             subprocess.check_call(["pip3", "install", module_name], stdout=log_file, stderr=log_file)
 
-        success_message = f"Successfully installed {module_name}"
-        print(BOLD + BG_CYAN + WHITE + f"✅  {success_message}" + RESET)
+        success_message = f"✅  Successfully installed {module_name}"
+        print(BOLD + BG_CYAN + WHITE + f"{success_message}" + RESET)
         logger.info(success_message)
         logger.debug(success_message)  # Log the same message as debug level
     except Exception as e:
@@ -113,6 +113,10 @@ def check_and_install_modules(module_list):
         print(BOLD + BG_CYAN + WHITE + "✅  All required modules are already installed." + RESET)
         logger.info("✅  All required modules are already installed.")
         logger.debug("✅  All required modules are already installed.")  # Log the same message as debug level
+
+# Initialize logger. Start of script.
+logger.info("Script started")
+check_and_install_modules(required_modules)
 
 # Main Modules
 import os
@@ -452,22 +456,11 @@ def show_help():
 	
 def main():
     try:
-        # Initialize logger
-        logger.info("Script started")
-        
         # Validate config.py
         validate_config()
 
         # Set up NetBox API connection
         nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
-
-        # Get list of available rack names
-        rack_names = get_rack_names(nb)
-
-        # Call the function to check and install modules
-        #logger.setLevel(logging.ERROR)
-        check_and_install_modules(required_modules)
-        #logger.setLevel(logging.DEBUG)
         
         if len(sys.argv) < 2:
             show_help()
