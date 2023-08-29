@@ -1,4 +1,6 @@
 # Logging Module
+import os
+import sys
 import logging
 import importlib
 
@@ -35,9 +37,13 @@ def validate_config():
         os.environ["NETBOX_URL"] = NETBOX_URL
     except ImportError:
         logger.error("Configuration error: Missing or incomplete data in config.py.")
+        print("Configuration error: Missing or incomplete data in config.py.")
         logger.error("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
+        print("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
         sys.exit(1)
-        
+
+validate_config()
+
 # Module Validation
 import subprocess
 
@@ -125,6 +131,7 @@ from datetime import datetime
 import openpyxl
 from openpyxl.styles import Alignment
 import textwrap
+import subprocess
 
 # Load sensitive data from config.py and store as environment variables
 try:
@@ -139,8 +146,76 @@ except ImportError:
 from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
 		
 #host and token
-nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
+#nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
 #fetch all devices
+#nb_devicelist = nb.dcim.devices.all()
+
+def display_config_file():
+    try:
+        completed_process = subprocess.run(["cat", "config.py"], check=True, text=True, capture_output=True)
+        output = completed_process.stdout
+        colored_output = f"\033[1m\033[41m\033[33m{output}\033[0m"  # Set BOLD, background to red, and text color to yellow
+        print(colored_output + RESET)
+
+        # Write the colored output to the log file
+        logger.info("Displayed config file contents:\n%s", colored_output)
+
+    except subprocess.CalledProcessError as e:
+        error_message = f"Error running 'cat' command: {e}"
+        print(error_message)
+        logger.error(error_message)
+    except FileNotFoundError:
+        error_message = "'cat' command not found. Make sure you're running on a Unix-like system."
+        print(error_message)
+        logger.error(error_message)
+    except Exception as e:
+        error_message = f"An error occurred: {e}"
+        print(error_message)
+        logger.error(error_message)
+
+def display_config_file():
+    try:
+        completed_process = subprocess.run(["cat", "config.py"], check=True, text=True, capture_output=True)
+        output = completed_process.stdout
+        colored_output = f"\033[1m\033[41m\033[33m{output}\033[0m"  # Set BOLD, background to red, and text color to yellow
+        print(colored_output + RESET)
+
+        # Log each line separately
+        for line in output.splitlines():
+            logger.info(line)
+
+    except subprocess.CalledProcessError as e:
+        error_message = f"Error running 'cat' command: {e}"
+        print(error_message)
+        logger.error(error_message)
+    except FileNotFoundError:
+        error_message = "'cat' command not found. Make sure you're running on a Unix-like system."
+        print(error_message)
+        logger.error(error_message)
+    except Exception as e:
+        error_message = f"An error occurred: {e}"
+        print(error_message)
+        logger.error(error_message)
+        
+try:
+    # Initialize the NetBox API connection
+    nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
+except IndexError as index_error:
+    error_message = "Error initializing NetBox API: {}".format(index_error)
+    logger.error(error_message)
+    print(error_message)
+    logger.error("Check your config.py file for `NETBOX_TOKEN` and `NETBOX_URL` definitions.")
+    print(BOLD + BG_RED + YELLOW + "Check your config.py file for `NETBOX_TOKEN` and `NETBOX_URL` definitions." + RESET)
+    display_config_file()
+    #logger.info(display_config_file())
+    print()
+    sys.exit(1)
+except Exception as e:
+    error_message = "An error occurred: {}".format(e)
+    logger.error(error_message)
+    print("An error occurred while initializing NetBox API.")
+    sys.exit(1)
+
 nb_devicelist = nb.dcim.devices.all()
 
 headers = ['Name', 'Status', 'Site', 'Rack', 'Role', 'Manufacturer', 'Type', 'Owner', 'Birthday', 'Age (Months)', 'Service Contract', 'Warranty', 'Serial Number', 'Platform', 'Software', 'SW_Version', 'Primary IP']
@@ -363,9 +438,10 @@ def show_help():
     print(RED + FACE_ASCII + RESET)
     print(BOLD + "Available functions:" + RESET)
     print(" ► " + BG_GREEN + BLACK + "get_devices" + RESET + " or " + BG_GREEN + BLACK + "-d" + RESET + " ► GETS active device info from Netbox, writes output.csv and converts to output.xlsx file.")
-    print (" ► " + BG_GREEN + BLACK + "get_rack_device_details" + RESET + " or " + BG_GREEN + BLACK + "-r" + RESET + " ► GETS rack with device details, and saves file rack_details_with_devices.xlsx.")
+    print (" ► " + BG_GREEN + BLACK + "get_racks" + RESET + " or " + BG_GREEN + BLACK + "-r" + RESET + " ► GETS rack with device details, and saves file rack_details_with_devices.xlsx.")
     print(" ► " + BG_BLUE + WHITE + "update_age" + RESET + " or " + BG_BLUE + WHITE + "-a" + RESET + " ► This will update the age for all active devices on Netbox server.")
     print(" ► " + BG_YELLOW + BLACK + "joke:" + RESET + " or " + BG_YELLOW + BLACK + "-j" + RESET +  " ► Prints random Chuck Norris joke.")
+    print(" ► " + BG_WHITE + BLACK + "validate_config:" + RESET + " or " + BG_WHITE + BLACK + "-v" + RESET +  " ► Validates script config.py file.")
     print(BOLD + WHITE + " ► Usage: python netbox_api.py <function_name>")
     print(UNDERLINE + BG_CYAN + "................................................" + RESET)
     print()
@@ -408,6 +484,8 @@ def main():
              get_rack_details_with_devices(nb)
         elif function_name == "joke" or function_name == "-j":
             joke()
+        elif function_name == "validate_config" or function_name == "-v":
+            validate_config()
         elif function_name == "--help" or function_name == "-h":
             show_help()
         else:
