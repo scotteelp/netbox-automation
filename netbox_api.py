@@ -35,14 +35,14 @@ def validate_config():
         # Set environment variables
         os.environ["NETBOX_TOKEN"] = NETBOX_TOKEN
         os.environ["NETBOX_URL"] = NETBOX_URL
+        print(BOLD + BG_CYAN + WHITE + "✅  Configuration validated successfully." + RESET)
+        logger.info("✅  Configuration validated successfully.")
     except ImportError:
         logger.error("Configuration error: Missing or incomplete data in config.py.")
         print("Configuration error: Missing or incomplete data in config.py.")
         logger.error("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
         print("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
         sys.exit(1)
-
-validate_config()
 
 # Module Validation
 import subprocess
@@ -114,8 +114,6 @@ def check_and_install_modules(module_list):
         logger.info("✅  All required modules are already installed.")
         logger.debug("✅  All required modules are already installed.")  # Log the same message as debug level
 
-check_and_install_modules(required_modules)
-
 # Main Modules
 import os
 import pynetbox
@@ -149,29 +147,6 @@ from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
 #nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
 #fetch all devices
 #nb_devicelist = nb.dcim.devices.all()
-
-def display_config_file():
-    try:
-        completed_process = subprocess.run(["cat", "config.py"], check=True, text=True, capture_output=True)
-        output = completed_process.stdout
-        colored_output = f"\033[1m\033[41m\033[33m{output}\033[0m"  # Set BOLD, background to red, and text color to yellow
-        print(colored_output + RESET)
-
-        # Write the colored output to the log file
-        logger.info("Displayed config file contents:\n%s", colored_output)
-
-    except subprocess.CalledProcessError as e:
-        error_message = f"Error running 'cat' command: {e}"
-        print(error_message)
-        logger.error(error_message)
-    except FileNotFoundError:
-        error_message = "'cat' command not found. Make sure you're running on a Unix-like system."
-        print(error_message)
-        logger.error(error_message)
-    except Exception as e:
-        error_message = f"An error occurred: {e}"
-        print(error_message)
-        logger.error(error_message)
 
 def display_config_file():
     try:
@@ -469,7 +444,7 @@ def main():
         # Call the function to check and install modules
         logger.setLevel(logging.ERROR)
         check_and_install_modules(required_modules)
-        logger.setLevel(logging.DEBUG)
+        #logger.setLevel(logging.DEBUG)
         
         if len(sys.argv) < 2:
             show_help()
