@@ -86,12 +86,8 @@ def check_and_install_modules(module_list):
     missing_modules = [module for module in module_list if not is_module_installed(module)]
     
     if missing_modules:
-        #print("⚠️  The following required modules are missing:")
-        #logger.warning("The following required modules are missing:")
         for module in missing_modules:
-            #print(f" - {module}")
-            logger.warning(f" - {module}")
-            #logger.info(f" - {module}")
+            logger.warning(f"Required module '{module}' is missing.")
         
         while True:
             install_choice = input(BOLD + WHITE + "Do you want to install the missing modules? (y/n): " + RESET).strip().lower()
@@ -103,7 +99,7 @@ def check_and_install_modules(module_list):
                 break
             elif install_choice == "":
                 print(BG_BLUE + BOLD + YELLOW + "Please enter 'y' or 'yes' to install missing modules." + RESET)
-                logger.info("User pressed Enter/Return. Please enter 'y' or 'yes' to install missing modules." + RESET)
+                logger.warning("User pressed Enter/Return. Please enter 'y' or 'yes' to install missing modules.")
             else:
                 print(BG_BLUE + BOLD + YELLOW + "Missing modules will not be installed." + RESET)
                 logger.info("User chose not to install missing modules.")
@@ -112,7 +108,7 @@ def check_and_install_modules(module_list):
     else:
         print(BOLD + BG_CYAN + WHITE + "✅  All required modules are already installed." + RESET)
         logger.info("✅  All required modules are already installed.")
-        logger.debug("✅  All required modules are already installed.")  # Log the same message as debug level
+        logger.debug("✅  All required modules are already installed.")
 
 # Main Modules
 import os
@@ -147,6 +143,29 @@ from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
 #nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
 #fetch all devices
 #nb_devicelist = nb.dcim.devices.all()
+
+def display_config_file():
+    try:
+        completed_process = subprocess.run(["cat", "config.py"], check=True, text=True, capture_output=True)
+        output = completed_process.stdout
+        colored_output = f"\033[1m\033[41m\033[33m{output}\033[0m"  # Set BOLD, background to red, and text color to yellow
+        print(colored_output + RESET)
+
+        # Write the colored output to the log file
+        logger.info("Displayed config file contents:\n%s", colored_output)
+
+    except subprocess.CalledProcessError as e:
+        error_message = f"Error running 'cat' command: {e}"
+        print(error_message)
+        logger.error(error_message)
+    except FileNotFoundError:
+        error_message = "'cat' command not found. Make sure you're running on a Unix-like system."
+        print(error_message)
+        logger.error(error_message)
+    except Exception as e:
+        error_message = f"An error occurred: {e}"
+        print(error_message)
+        logger.error(error_message)
 
 def display_config_file():
     try:
@@ -442,9 +461,9 @@ def main():
         rack_names = get_rack_names(nb)
 
         # Call the function to check and install modules
-        logger.setLevel(logging.ERROR)
+        #logger.setLevel(logging.ERROR)
         check_and_install_modules(required_modules)
-        #logger.setLevel(logging.DEBUG)
+        #logger.setLevel(logging.INFO)
         
         if len(sys.argv) < 2:
             show_help()
