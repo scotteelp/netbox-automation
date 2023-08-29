@@ -28,10 +28,23 @@ def setup_logging():
 logger = setup_logging()
 
 # Validate config.py
+def validate_url(url):
+    try:
+        result = urllib.parse.urlparse(url)
+        return result.scheme in ("http", "https") and result.netloc
+    except:
+        return False
+
 def validate_config():
     try:
         # Try importing NETBOX_TOKEN and NETBOX_URL from config.py
         from config import NETBOX_TOKEN, NETBOX_URL
+        if not NETBOX_TOKEN or not NETBOX_URL:
+            raise ImportError
+
+        if not validate_url(NETBOX_URL):
+            raise ImportError
+
         # Set environment variables
         os.environ["NETBOX_TOKEN"] = NETBOX_TOKEN
         os.environ["NETBOX_URL"] = NETBOX_URL
@@ -40,9 +53,31 @@ def validate_config():
     except ImportError:
         logger.error("Configuration error: Missing or incomplete data in config.py.")
         print("Configuration error: Missing or incomplete data in config.py.")
-        logger.error("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
-        print("Please provide valid NETBOX_URL and NETBOX_TOKEN.")
-        sys.exit(1)
+
+        while True:
+            configure_url_input = input(BOLD + YELLOW + "Enter valid NETBOX_URL (starting with 'http' or 'https'): " + RESET).strip()
+            if configure_url_input and validate_url(configure_url_input):
+                break
+            else:
+                print(RED + "Invalid URL. Please enter a valid URL starting with 'http' or 'https'." + RESET)
+
+        while True:
+            configure_token_input = input(BOLD + YELLOW + "Enter NETBOX_TOKEN: " + RESET).strip()
+            if configure_token_input:
+                break
+            else:
+                print(RED + "NETBOX_TOKEN cannot be empty." + RESET)
+
+        # Write the validated data to config.py
+        with open("config.py", "w") as config_file:
+            config_file.write(f"NETBOX_URL = '{configure_url_input}'\n")
+            config_file.write(f"NETBOX_TOKEN = '{configure_token_input}'\n")
+
+        os.environ["NETBOX_TOKEN"] = configure_token_input
+        os.environ["NETBOX_URL"] = configure_url_input
+        print(BOLD + BG_GREEN + WHITE + "✅  Configuration saved and validated successfully." + RESET)
+        logger.info("✅  Configuration saved and validated successfully.")
+        sys.exit(0)
 
 # Module Validation
 import subprocess
@@ -134,6 +169,7 @@ import openpyxl
 from openpyxl.styles import Alignment
 import textwrap
 import subprocess
+import urllib.parse
 
 # Load sensitive data from config.py and store as environment variables
 try:
@@ -154,10 +190,22 @@ from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
 
 def display_config_file():
     try:
+        message = "Configuration updated in config.py. Please re-run the script."
         completed_process = subprocess.run(["cat", "config.py"], check=True, text=True, capture_output=True)
         output = completed_process.stdout
         colored_output = f"\033[1m\033[41m\033[33m{output}\033[0m"  # Set BOLD, background to red, and text color to yellow
         print(colored_output + RESET)
+        # Prompt the user to input NETBOX_URL and NETBOX_TOKEN
+        netbox_url = input("Enter NETBOX_URL: ")
+        netbox_token = input("Enter NETBOX_TOKEN: ")
+
+        # Write the input values to config.py
+        with open("config.py", "w") as config_file:
+            config_file.write(f"NETBOX_URL = '{netbox_url}'\n")
+            config_file.write(f"NETBOX_TOKEN = '{netbox_token}'\n")
+
+        print(message)
+        logger.info(message)
 
         # Log each line separately
         for line in output.splitlines():
