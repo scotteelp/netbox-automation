@@ -59,7 +59,7 @@ def is_module_installed(module_name):
         importlib.import_module(module_name)
         return True
     except ImportError:
-        warning_message = f"❌  Module {module_name} is not installed."
+        warning_message = f"❌ - Module {module_name} is not installed."
         logger.warning(warning_message)
         #logger.info(warning_message)  # Log the same message as info level
         return False
@@ -90,7 +90,7 @@ def check_and_install_modules(module_list):
         #logger.warning("The following required modules are missing:")
         for module in missing_modules:
             #print(f" - {module}")
-            logger.warning(f" - {module}")
+            logger.warning(f"❌ - {module}")
             #logger.info(f" - {module}")
         
         while True:
@@ -151,29 +151,6 @@ from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
 #nb = pynetbox.api(NETBOX_URL, NETBOX_TOKEN)
 #fetch all devices
 #nb_devicelist = nb.dcim.devices.all()
-
-def display_config_file():
-    try:
-        completed_process = subprocess.run(["cat", "config.py"], check=True, text=True, capture_output=True)
-        output = completed_process.stdout
-        colored_output = f"\033[1m\033[41m\033[33m{output}\033[0m"  # Set BOLD, background to red, and text color to yellow
-        print(colored_output + RESET)
-
-        # Write the colored output to the log file
-        logger.info("Displayed config file contents:\n%s", colored_output)
-
-    except subprocess.CalledProcessError as e:
-        error_message = f"Error running 'cat' command: {e}"
-        print(error_message)
-        logger.error(error_message)
-    except FileNotFoundError:
-        error_message = "'cat' command not found. Make sure you're running on a Unix-like system."
-        print(error_message)
-        logger.error(error_message)
-    except Exception as e:
-        error_message = f"An error occurred: {e}"
-        print(error_message)
-        logger.error(error_message)
 
 def display_config_file():
     try:
