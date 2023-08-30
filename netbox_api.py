@@ -3,6 +3,8 @@ import os
 import sys
 import logging
 import importlib
+import requests
+
 
 def setup_logging():
     logger = logging.getLogger(__name__)
@@ -27,6 +29,7 @@ def setup_logging():
 
 logger = setup_logging()
 
+
 # Validate config.py
 def validate_url(url):
     try:
@@ -34,6 +37,7 @@ def validate_url(url):
         return result.scheme in ("http", "https") and result.netloc
     except:
         return False
+
 
 def validate_config():
     try:
@@ -50,13 +54,25 @@ def validate_config():
         os.environ["NETBOX_URL"] = NETBOX_URL
         print(BOLD + BG_CYAN + WHITE + "✅  Configuration validated successfully." + RESET)
         logger.info("✅  Configuration validated successfully.")
+
+        # Check API server using provided NETBOX_TOKEN
+        try:
+            response = requests.get(f"{NETBOX_URL}/api/dcim/devices/", headers={"Authorization": f"Token {NETBOX_TOKEN}"})
+            response.raise_for_status()  # Check for HTTP errors
+            print(BOLD + BG_GREEN + WHITE + "✅  API server connection successful." + RESET)
+            logger.info("✅  API server connection successful.")
+        except requests.exceptions.RequestException:
+            print(RED + "❌  API server connection failed. Please check the provided configuration." + RESET)
+            logger.error("❌  API server connection failed. Please check the provided configuration.")
+            sys.exit(1)
+
     except ImportError:
         logger.error("Configuration error: Missing or incomplete data in config.py.")
         print("Configuration error: Missing or incomplete data in config.py.")
 
         while True:
             configure_url_input = input(BOLD + YELLOW + "Enter valid NETBOX_URL (starting with 'http' or 'https'): " + RESET).strip()
-            if configure_url_input and validate_url(configure_url_input):
+            if configure_url_input.startswith('http') and validate_url(configure_url_input):
                 break
             else:
                 print(RED + "Invalid URL. Please enter a valid URL starting with 'http' or 'https'." + RESET)
@@ -70,13 +86,25 @@ def validate_config():
 
         # Write the validated data to config.py
         with open("config.py", "w") as config_file:
-            config_file.write(f"NETBOX_URL = '{configure_url_input}'\n")
             config_file.write(f"NETBOX_TOKEN = '{configure_token_input}'\n")
-
+            config_file.write(f"NETBOX_URL = '{configure_url_input}'\n")
+            
         os.environ["NETBOX_TOKEN"] = configure_token_input
         os.environ["NETBOX_URL"] = configure_url_input
         print(BOLD + BG_GREEN + WHITE + "✅  Configuration saved and validated successfully." + RESET)
         logger.info("✅  Configuration saved and validated successfully.")
+        
+        # Check API server using the newly saved NETBOX_TOKEN
+        try:
+            response = requests.get(f"{configure_url_input}/api/dcim/devices/", headers={"Authorization": f"Token {configure_token_input}"})
+            response.raise_for_status()  # Check for HTTP errors
+            print(BOLD + BG_GREEN + WHITE + "✅  API server connection successful." + RESET)
+            logger.info("✅  API server connection successful.")
+        except requests.exceptions.RequestException:
+            print(RED + "❌  API server connection failed. Please check the provided configuration." + RESET)
+            logger.error("❌  API server connection failed. Please check the provided configuration.")
+            sys.exit(1)
+
         sys.exit(0)
 
 # Module Validation
@@ -88,6 +116,7 @@ from color_definitions import BOLD, UNDERLINE, RESET, RED, GREEN, YELLOW, BLACK,
 # List of required modules
 required_modules = ['pynetbox', 'csv', 'sys', 'requests', 'pandas', 'datetime', 'openpyxl']
 
+
 # Check if a module is installed
 def is_module_installed(module_name):
     try:
@@ -98,6 +127,7 @@ def is_module_installed(module_name):
         logger.warning(warning_message)
         #logger.info(warning_message)  # Log the same message as info level
         return False
+
 
 # Install a missing module		
 def install_module(module_name):
@@ -115,6 +145,7 @@ def install_module(module_name):
         print(BOLD + UNDERLINE + RED + f"❌  {error_message}" + RESET)
         logger.error(error_message)
         logger.debug(error_message)  # Log the same message as debug level
+
 
 # Check and install missing modules
 def check_and_install_modules(module_list):
@@ -188,6 +219,7 @@ from ascii_art import VIDGO_ASCII, FACE_ASCII, CHUCK_ASCII, NETBOX_ASCII
 #fetch all devices
 #nb_devicelist = nb.dcim.devices.all()
 
+
 def display_config_file():
     try:
         message = "Configuration updated in config.py. Please re-run the script."
@@ -247,12 +279,14 @@ nb_devicelist = nb.dcim.devices.all()
 
 headers = ['Name', 'Status', 'Site', 'Rack', 'Role', 'Manufacturer', 'Type', 'Owner', 'Birthday', 'Age (Months)', 'Service Contract', 'Warranty', 'Serial Number', 'Platform', 'Software', 'SW_Version', 'Primary IP']
 
+
 def calculate_age_in_months(birthday):
 	today = datetime.today()
 	birth_date = datetime.strptime(birthday, '%Y-%m-%d')
 	age_months = (today.year - birth_date.year) * 12 + today.month - birth_date.month
 	return age_months
-	
+
+
 def csv_to_xlsx(headers, devices_data):
 	wb = openpyxl.Workbook()
 	ws = wb.active
@@ -279,6 +313,7 @@ def csv_to_xlsx(headers, devices_data):
 
 	wb.save('output.xlsx')
 	
+
 def get_devices(nb_devicelist, headers):
     devices_data = []  # List to hold device information
     logger.info("Getting device information from Netbox...")
@@ -358,6 +393,9 @@ def update_age(nb_devicelist):
     print()
 
 
+from openpyxl.styles import Font, Color, PatternFill
+from openpyxl.worksheet.table import Table, TableStyleInfo
+
 def save_rack_details_to_xlsx(racks_with_devices):
     wb = openpyxl.Workbook()
     # Remove the default "Sheet"
@@ -366,16 +404,52 @@ def save_rack_details_to_xlsx(racks_with_devices):
     for rack_name, devices_info in racks_with_devices.items():
         ws = wb.create_sheet(title=rack_name)
         ws.append(["Device Name", "Role", "Type", "Manufacturer", "Rack Unit"])
+
+        # Sort devices_info by the "Rack Unit" in decreasing order
+        devices_info = sorted(devices_info, key=lambda x: x["rack_unit"], reverse=True)
+
         for device_info in devices_info:
+            # Format the "Rack Unit" to display single digits as double digits
+            rack_unit = device_info['rack_unit']
+            if isinstance(rack_unit, (int, float)):
+                rack_unit_formatted = f"{int(rack_unit):02d}"  # Format as two-digit string
+            else:
+                rack_unit_formatted = str(rack_unit)  # Keep other values as they are
+
             ws.append([
                 device_info["name"],
                 device_info["role"],
                 device_info["type"],
                 device_info["manufacturer"],
-                device_info["rack_unit"]
+                rack_unit_formatted
             ])
+        
+        # Define a table range including headers
+        table_range = f"A1:E{len(devices_info) + 1}"
+
+        # Create a table
+        table = Table(displayName=rack_name, ref=table_range)
+
+        # Apply a predefined table style with blue colors
+        table_style = TableStyleInfo(
+            name="TableStyleMedium2",  # This style has blue colors
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=False,
+        )
+        table.tableStyleInfo = table_style
+
+        # Apply font color as black to all cells in the table
+        for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
+            for cell in row:
+                cell.font = Font(color="000000")  # Black color
+
+        # Add the table to the worksheet
+        ws.add_table(table)
 
     wb.save('rack_details_with_devices.xlsx')
+
 
 def get_rack_details_with_devices(nb_instance):
     try:
@@ -431,6 +505,7 @@ def get_rack_names(nb_instance):
         rack_names.append(rack.name)
     return rack_names
 
+
 def joke():
     try:
         response = requests.get("https://api.chucknorris.io/jokes/random")
@@ -458,6 +533,7 @@ def joke():
         logger.error("HTTP error occurred: %s", e)
     except Exception as e:
         logger.error("An error occurred: %s", e)
+
 
 def show_help():
     print()
