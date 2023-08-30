@@ -201,6 +201,8 @@ from openpyxl.styles import Alignment
 import textwrap
 import subprocess
 import urllib.parse
+from openpyxl.styles import Font, Color, PatternFill
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 # Load sensitive data from config.py and store as environment variables
 try:
@@ -288,30 +290,47 @@ def calculate_age_in_months(birthday):
 
 
 def csv_to_xlsx(headers, devices_data):
-	wb = openpyxl.Workbook()
-	ws = wb.active
+    wb = openpyxl.Workbook()
+    ws = wb.active
 
-	ws.append(headers)
-	for device in devices_data:
-		ws.append([device.get(header, '') for header in headers])
+    ws.append(headers)
+    for device in devices_data:
+        ws.append([device.get(header, '') if device.get(header, '') is not False else '' for header in headers])
 
-	for col in ws.columns:
-		max_length = 0
-		column = col[0].column_letter  # Get the column name
-		for cell in col:
-			try:
-				if len(str(cell.value)) > max_length:
-					max_length = len(cell.value)
-			except:
-				pass
-		adjusted_width = (max_length + 2)
-		ws.column_dimensions[column].width = adjusted_width
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter  # Get the column name
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
 
-	for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-		for cell in row:
-			cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+        for cell in row:
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
 
-	wb.save('output.xlsx')
+    # Create a Font object for the header row
+    header_font = Font(bold=True, color="FFFFFFFF")  # White font color
+
+    # Apply the header font to the header row
+    header_row = ws[1]
+    for cell in header_row:
+        cell.font = header_font
+
+    # Create the table with a predefined style
+    table = Table(displayName="Table1", ref=ws.dimensions)
+    style = TableStyleInfo(
+        name="TableStyleMedium9", showFirstColumn=False,
+        showLastColumn=False, showRowStripes=True, showColumnStripes=False
+    )
+    table.tableStyleInfo = style
+    ws.add_table(table)
+
+    wb.save('output.xlsx')
 	
 
 def get_devices(nb_devicelist, headers):
@@ -391,10 +410,6 @@ def update_age(nb_devicelist):
     print()
     print(UNDERLINE + BG_CYAN + BLACK + "................................................" + RESET)
     print()
-
-
-from openpyxl.styles import Font, Color, PatternFill
-from openpyxl.worksheet.table import Table, TableStyleInfo
 
 def save_rack_details_to_xlsx(racks_with_devices):
     wb = openpyxl.Workbook()
