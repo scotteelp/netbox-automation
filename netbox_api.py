@@ -447,7 +447,7 @@ def save_rack_details_to_xlsx(racks_with_devices):
 
         # Apply a predefined table style with blue colors
         table_style = TableStyleInfo(
-            name="TableStyleMedium2",  # This style has blue colors
+            name="TableStyleMedium9",  # This style has blue colors
             showFirstColumn=False,
             showLastColumn=False,
             showRowStripes=True,
@@ -459,6 +459,11 @@ def save_rack_details_to_xlsx(racks_with_devices):
         for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
             for cell in row:
                 cell.font = Font(color="000000")  # Black color
+        
+        # Apply bold white font to the header row
+        header_row = ws[1]
+        for cell in header_row:
+            cell.font = Font(bold=True, color="FFFFFF")
 
         # Add the table to the worksheet
         ws.add_table(table)
